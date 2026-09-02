@@ -1,11 +1,22 @@
 const net = require('net');
+const http = require('http');
 
+// --- 1. SITE FALSO PARA ENGANAR O RENDER GRÁTIS ---
+const PORT_WEB = process.env.PORT || 3000;
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Bot AVB Online\n');
+}).listen(PORT_WEB, () => {
+    console.log(`Site falso ativo na porta ${PORT_WEB}`);
+});
+
+// --- 2. LIGAÇÃO REAL DO BOT AO VIPCHAT ---
 const SERVER = '://vipchat.com.br'; 
-const PORT = 6667;                    
+const PORT_IRC = 6667;                    
 const BOT_NICK = 'AVB';               
 const CHANNEL = '#FCP';               
 
-const client = net.connect({ host: SERVER, port: PORT }, () => {
+const client = net.connect({ host: SERVER, port: PORT_IRC }, () => {
     console.log('Bot AVB a ligar ao Vipchat...');
     client.write(`NICK ${BOT_NICK}\r\n`);
     client.write(`USER ${BOT_NICK} 0 * :Bot de Boas-Vindas Oficial\r\n`);
@@ -19,8 +30,7 @@ client.on('data', (data) => {
     }
 
     if (response.includes('001 ' + BOT_NICK)) {
-        // Envia a palavra-passe para o NickServ para se autenticar
-        // Substitua '1234567890' pela senha que definiu no comando GROUP/REGISTER
+        // Substitua 'SUA_SENHA_AQUI' pela senha do seu grupo de nicks
         client.write(`PRIVMSG NickServ :IDENTIFY 1234567890\r\n`);
         
         setTimeout(() => {
