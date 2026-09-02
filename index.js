@@ -36,7 +36,7 @@ client.on('data', (data) => {
     // Entra no canal assim que a rede aceita o bot (código 001, 004, 251 ou 376)
     if (response.includes(' 001 ') || response.includes(' 376 ')) {
         // MUDE 'SUA_SENHA_AQUI' para a tua senha verdadeira do grupo de nicks
-        client.write(`PRIVMSG NickServ :IDENTIFY SUA_SENHA_AQUI\r\n`);
+        client.write(`PRIVMSG NickServ :1234567890\r\n`);
         
         setTimeout(() => {
             console.log(`A forçar entrada no canal ${CHANNEL}`);
