@@ -1,4 +1,4 @@
-const tls = require('net');
+const net = require('net');
 const http = require('http');
 
 // --- 1. SITE FALSO PARA MANTER O RENDER GRÁTIS ONLINE ---
@@ -10,21 +10,21 @@ http.createServer((req, res) => {
     console.log(`Site falso ativo na porta ${PORT_WEB}`);
 });
 
-// --- 2. LIGAÇÃO NATIVAMENTE SEGURA (TLS) AO IRC DO VIPCHAT ---
+// --- 2. LIGAÇÃO LIMPA AO IRC DO VIPCHAT ---
 const SERVER = '://vipchat.com.br'; 
-const PORT_IRC = 6667; // Porta TLS/SSL segura padrão de IRC                   
+const PORT_IRC = 6667;                    
 const BOT_NICK = 'AVB';               
 const CHANNEL = '#FCP';               
 
 const client = net.connect({ port: PORT_IRC, host: SERVER }, () => {
-    console.log('Ligado de forma segura à rede Vipchat!');
+    console.log('Ligado com sucesso à rede Vipchat!');
     client.write(`NICK ${BOT_NICK}\r\n`);
-    client.write(`USER ${BOT_NICK} 0 * :Bot de Boas-Vindas Oficial\r\n`);
+    client.write(`USER ${BOT_NICK} 8 * :Bot de Boas-Vindas Oficial\r\n`);
 });
 
 client.on('data', (data) => {
     const response = data.toString();
-    console.log("IRC:", response); // Mostra o progresso real nos logs do Render
+    console.log("IRC:", response);
     
     if (response.startsWith('PING')) {
         client.write(response.replace('PING', 'PONG'));
@@ -32,7 +32,7 @@ client.on('data', (data) => {
     }
 
     if (response.includes(' 001 ') || response.includes(' 376 ')) {
-        // Substitua 'SUA_SENHA_AQUI' pela palavra-passe verdadeira da sua conta
+        // MUDE 'SUA_SENHA_AQUI' para a tua senha verdadeira do grupo de nicks
         client.write(`PRIVMSG NickServ :IDENTIFY 1234567890\r\n`);
         
         setTimeout(() => {
@@ -43,7 +43,6 @@ client.on('data', (data) => {
 
     if (response.includes(' JOIN :') || response.includes(' JOIN #' + CHANNEL)) {
         try {
-            // Extrai de forma limpa o nick de quem entrou
             const partes = response.split('!');
             let nickEmissor = partes[0];
             if (nickEmissor.startsWith(':')) {
@@ -60,5 +59,5 @@ client.on('data', (data) => {
 });
 
 client.on('error', (err) => {
-    console.log('Erro na ligação segura:', err.message);
+    console.log('Erro na ligação:', err.message);
 });
