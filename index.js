@@ -11,7 +11,7 @@ http.createServer((req, res) => {
 });
 
 // --- 2. LIGAÇÃO REAL DO BOT AO VIPCHAT ---
-const SERVER = '://vipchat.com.br'; 
+const SERVER = 'irc.vipchat.com.br';
 const PORT_IRC = 6667;                    
 const BOT_NICK = 'AVB';               
 const CHANNEL = '#FCP';               
