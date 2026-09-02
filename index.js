@@ -1,65 +1,59 @@
-const net = require('net');
+const WebSocket = require('ws');
 const http = require('http');
 
-// --- 1. SITE FALSO PARA MANTER O RENDER ONLINE ---
+// 1. MANTÉM O RENDER ONLINE (SITE FALSO)
 const PORT_WEB = process.env.PORT || 3000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Bot AVB Ativo\n');
-}).listen(PORT_WEB, () => {
-    console.log(`Site falso ativo na porta ${PORT_WEB}`);
+    res.end('Bot AVB Web Ativo\n');
+}).listen(PORT_WEB);
+
+// 2. LIGAÇÃO WEBSOCKET AO CHAT DO BATEPAPO / VIPCHAT
+// Usamos o endereço de transmissão web seguro (wss)
+const WS_URL = 'wss://:irc.vipchat.com.br/webchat'; 
+const BOT_NICK = 'AVB';
+const CHANNEL = '#FCP';
+
+const ws = new WebSocket(WS_URL);
+
+ws.on('open', () => {
+    console.log('Ligado ao WebSocket do Batepapo!');
+    // Protocolo de entrada via Webchat
+    ws.send(`NICK ${BOT_NICK}\r\n`);
+    ws.send(`USER ${BOT_NICK} 0 * :Bot de Boas-Vindas\r\n`);
 });
 
-// --- 2. LIGAÇÃO AO VIPCHAT ---
-const SERVER = '104.21.19.167'; 
-const PORT_IRC = 6667;                    
-const BOT_NICK = 'AVB';               
-const CHANNEL = '#FCP';               
-
-const client = net.connect({ host: SERVER, port: PORT_IRC }, () => {
-    console.log('A ligar à rede Vipchat...');
-    client.write(`NICK ${BOT_NICK}\r\n`);
-    client.write(`USER ${BOT_NICK} 8 * :Bot de Boas-Vindas\r\n`);
-});
-
-client.on('data', (data) => {
+ws.on('message', (data) => {
     const response = data.toString();
-    console.log("IRC:", response); // Isto vai mostrar tudo na aba LOGS do Render
     
-    // Responde ao PING do servidor para não ir abaixo
+    // Responde ao Ping da rede para não cair
     if (response.startsWith('PING')) {
-        const pingId = response.split(' ')[1];
-        client.write(`PONG ${pingId}\r\n`);
+        ws.send(response.replace('PING', 'PONG'));
         return;
     }
 
-    // Entra no canal assim que a rede aceita o bot (código 001, 004, 251 ou 376)
+    // Entra na sala quando a ligação é aceite
     if (response.includes(' 001 ') || response.includes(' 376 ')) {
-        // MUDE 'SUA_SENHA_AQUI' para a tua senha verdadeira do grupo de nicks
-        client.write(`PRIVMSG NickServ :1234567890\r\n`);
+        // MUDE 'SUA_SENHA_AQUI' para a tua senha do grupo de nicks
+        ws.send(`PRIVMSG NickServ :IDENTIFY 1234567890\r\n`);
         
         setTimeout(() => {
-            console.log(`A forçar entrada no canal ${CHANNEL}`);
-            client.write(`JOIN ${CHANNEL}\r\n`);
+            console.log(`A entrar na sala ${CHANNEL}...`);
+            ws.send(`JOIN ${CHANNEL}\r\n`);
         }, 2000);
     }
 
-    // GATILHO DE SAUDAÇÃO CORRIGIDO
-    if (response.includes(' JOIN :#FCP') || response.includes(' JOIN #FCP')) {
-        try {
-            // Extrai o nick limpo de quem acabou de entrar
-            const nickEmissor = response.split('!')[0].replace(':', '').trim();
-            
-            // Se não for o próprio bot, envia a mensagem na sala
-            if (nickEmissor !== BOT_NICK && nickEmissor !== "") {
-                client.write(`PRIVMSG ${CHANNEL} :Olá ${nickEmissor}! Bem-vindo ao #FCP - Canal oficial dos fãs!\r\n`);
-            }
-        } catch (e) {
-            console.log('Erro ao processar o nick de entrada.');
+    // Dispara as boas-vindas públicas na sala
+    if (response.includes(' JOIN :' + CHANNEL) || response.includes(' JOIN ' + CHANNEL)) {
+        const partes = response.split('!');
+        const nickEmissor = partes[0].replace(':', '').trim();
+        
+        if (nickEmissor !== BOT_NICK && nickEmissor !== "") {
+            ws.send(`PRIVMSG ${CHANNEL} :Olá ${nickEmissor}! Bem-vindo ao #FCP - Canal oficial dos fãs!\r\n`);
         }
     }
 });
 
-client.on('error', (err) => {
-    console.log('Erro de Socket:', err.message);
+ws.on('error', (err) => {
+    console.log('Erro na ligação Web:', err.message);
 });
