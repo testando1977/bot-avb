@@ -11,7 +11,7 @@ http.createServer((req, res) => {
 });
 
 // --- 2. LIGAÇÃO NATIVAMENTE SEGURA (TLS) AO IRC DO VIPCHAT ---
-const SERVER = '://vipchat.com.br'; 
+const SERVER = 'irc.vipchat.com.br'; 
 const PORT_IRC = 6697; // Porta TLS/SSL segura padrão de IRC                   
 const BOT_NICK = 'AVB';               
 const CHANNEL = '#FCP';               
