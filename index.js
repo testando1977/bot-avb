@@ -16,7 +16,7 @@ const PORT_IRC = 6667; // Porta TLS/SSL segura padrão de IRC
 const BOT_NICK = 'AVB';               
 const CHANNEL = '#FCP';               
 
-const client = net.connect(PORT_IRC, SERVER, { rejectUnauthorized: false }, () => {
+const client = net.connect({ port: PORT_IRC, host: SERVER }, () => {
     console.log('Ligado de forma segura à rede Vipchat!');
     client.write(`NICK ${BOT_NICK}\r\n`);
     client.write(`USER ${BOT_NICK} 0 * :Bot de Boas-Vindas Oficial\r\n`);
