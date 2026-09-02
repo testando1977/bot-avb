@@ -10,7 +10,7 @@ http.createServer((req, res) => {
 
 // 2. LIGAÇÃO WEBSOCKET AO CHAT DO BATEPAPO / VIPCHAT
 // Usamos o endereço de transmissão web seguro (wss)
-const WS_URL = 'wss://:irc.vipchat.com.br/webchat'; 
+const WS_URL = 'wss://://vipchat.com.br:443/webchat';
 const BOT_NICK = 'AVB';
 const CHANNEL = '#FCP';
 
