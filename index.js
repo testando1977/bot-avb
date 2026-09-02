@@ -1,4 +1,4 @@
-const tls = require('tls');
+const tls = require('net');
 const http = require('http');
 
 // --- 1. SITE FALSO PARA MANTER O RENDER GRÁTIS ONLINE ---
@@ -11,12 +11,12 @@ http.createServer((req, res) => {
 });
 
 // --- 2. LIGAÇÃO NATIVAMENTE SEGURA (TLS) AO IRC DO VIPCHAT ---
-const SERVER = 'webchat.vipchat.com.br'; 
-const PORT_IRC = 80; // Porta TLS/SSL segura padrão de IRC                   
+const SERVER = '://vipchat.com.br'; 
+const PORT_IRC = 6667; // Porta TLS/SSL segura padrão de IRC                   
 const BOT_NICK = 'AVB';               
 const CHANNEL = '#FCP';               
 
-const client = tls.connect(PORT_IRC, SERVER, { rejectUnauthorized: false }, () => {
+const client = net.connect(PORT_IRC, SERVER, { rejectUnauthorized: false }, () => {
     console.log('Ligado de forma segura à rede Vipchat!');
     client.write(`NICK ${BOT_NICK}\r\n`);
     client.write(`USER ${BOT_NICK} 0 * :Bot de Boas-Vindas Oficial\r\n`);
