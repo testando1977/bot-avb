@@ -1,7 +1,7 @@
 const net = require('net');
 const http = require('http');
 
-// --- 1. SITE FALSO PARA O RENDER GRÁTIS ---
+// --- 1. SITE FALSO PARA MANTER O RENDER ONLINE ---
 const PORT_WEB = process.env.PORT || 3000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -10,53 +10,56 @@ http.createServer((req, res) => {
     console.log(`Site falso ativo na porta ${PORT_WEB}`);
 });
 
-// --- 2. LIGAÇÃO REAL AO VIPCHAT ---
-const SERVER = 'irc.vipchat.com.br'; 
+// --- 2. LIGAÇÃO AO VIPCHAT ---
+const SERVER = '://vipchat.com.br'; 
 const PORT_IRC = 6667;                    
 const BOT_NICK = 'AVB';               
 const CHANNEL = '#FCP';               
 
 const client = net.connect({ host: SERVER, port: PORT_IRC }, () => {
-    console.log('Bot AVB a ligar ao Vipchat...');
+    console.log('A ligar à rede Vipchat...');
     client.write(`NICK ${BOT_NICK}\r\n`);
-    client.write(`USER ${BOT_NICK} 8 * :Bot de Boas-Vindas Oficial\r\n`);
+    client.write(`USER ${BOT_NICK} 8 * :Bot de Boas-Vindas\r\n`);
 });
 
 client.on('data', (data) => {
     const response = data.toString();
-    console.log("Recebido do servidor:", response); // Mostra os logs reais no Render
+    console.log("IRC:", response); // Isto vai mostrar tudo na aba LOGS do Render
     
-    // Responde ao PING para não cair
-    if (response.toUpperCase().startsWith('PING')) {
-        client.write(response.toUpperCase().replace('PING', 'PONG'));
+    // Responde ao PING do servidor para não ir abaixo
+    if (response.startsWith('PING')) {
+        const pingId = response.split(' ')[1];
+        client.write(`PONG ${pingId}\r\n`);
+        return;
     }
 
-    // CORRECÇÃO: Deteta qualquer confirmação de entrada na rede (código 001 ou welcome)
-    if (response.includes(' 001 ') || response.includes('Welcome to the')) {
-        // Substitua 'SUA_SENHA_AQUI' pela senha do seu grupo de nicks
-        client.write(`PRIVMSG NickServ :IDENTIFY 1234567890\r\n`);
+    // Entra no canal assim que a rede aceita o bot (código 001, 004, 251 ou 376)
+    if (response.includes(' 001 ') || response.includes(' 376 ')) {
+        // MUDE 'SUA_SENHA_AQUI' para a tua senha verdadeira do grupo de nicks
+        client.write(`PRIVMSG NickServ :IDENTIFY SUA_SENHA_AQUI\r\n`);
         
-        // Entra na sala 3 segundos depois para dar tempo de autenticar
         setTimeout(() => {
-            console.log(`A entrar no canal ${CHANNEL}...`);
+            console.log(`A forçar entrada no canal ${CHANNEL}`);
             client.write(`JOIN ${CHANNEL}\r\n`);
-        }, 3000);
+        }, 2000);
     }
 
-    // Processa a saudação quando alguém entra
-    if (response.includes(' JOIN :') || response.includes(' JOIN #' + CHANNEL)) {
+    // GATILHO DE SAUDAÇÃO CORRIGIDO
+    if (response.includes(' JOIN :#FCP') || response.includes(' JOIN #FCP')) {
         try {
+            // Extrai o nick limpo de quem acabou de entrar
             const nickEmissor = response.split('!')[0].replace(':', '').trim();
             
+            // Se não for o próprio bot, envia a mensagem na sala
             if (nickEmissor !== BOT_NICK && nickEmissor !== "") {
                 client.write(`PRIVMSG ${CHANNEL} :Olá ${nickEmissor}! Bem-vindo ao #FCP - Canal oficial dos fãs!\r\n`);
             }
         } catch (e) {
-            console.log('Erro ao saudar utilizador.');
+            console.log('Erro ao processar o nick de entrada.');
         }
     }
 });
 
 client.on('error', (err) => {
-    console.log('Erro na ligação socket:', err.message);
+    console.log('Erro de Socket:', err.message);
 });
